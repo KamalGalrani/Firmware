@@ -1202,6 +1202,13 @@ PX4IO::task_main()
 					(void)io_reg_set(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_TRIM_YAW, FLOAT_TO_REG(param_val));
 				}
 
+				parm_handle = param_find("TRIM_STEER");
+
+				if (parm_handle != PARAM_INVALID) {
+					param_get(parm_handle, &param_val);
+					(void)io_reg_set(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_TRIM_STEER, FLOAT_TO_REG(param_val));
+				}
+
 				parm_handle = param_find("FW_MAN_R_SC");
 
 				if (parm_handle != PARAM_INVALID) {
@@ -2346,9 +2353,10 @@ PX4IO::print_status(bool extended_status)
 	float trim_roll = REG_TO_FLOAT(io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_TRIM_ROLL));
 	float trim_pitch = REG_TO_FLOAT(io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_TRIM_PITCH));
 	float trim_yaw = REG_TO_FLOAT(io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_TRIM_YAW));
+	float trim_steer = REG_TO_FLOAT(io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_TRIM_STEER));
 
-	printf(" trims: r: %8.4f p: %8.4f y: %8.4f\n",
-	       (double)trim_roll, (double)trim_pitch, (double)trim_yaw);
+	printf(" trims: r: %8.4f p: %8.4f y: %8.4f s: %8.4f\n",
+	       (double)trim_roll, (double)trim_pitch, (double)trim_yaw, (double)trim_steer);
 
 	uint16_t raw_inputs = io_reg_get(PX4IO_PAGE_RAW_RC_INPUT, PX4IO_P_RAW_RC_COUNT);
 	printf("%hu raw R/C inputs", raw_inputs);

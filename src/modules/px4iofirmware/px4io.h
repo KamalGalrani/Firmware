@@ -122,6 +122,7 @@ extern uint16_t			r_page_servo_disarmed[];	/* PX4IO_PAGE_DISARMED_PWM */
 #define r_setup_trim_roll	r_page_setup[PX4IO_P_SETUP_TRIM_ROLL]
 #define r_setup_trim_pitch	r_page_setup[PX4IO_P_SETUP_TRIM_PITCH]
 #define r_setup_trim_yaw	r_page_setup[PX4IO_P_SETUP_TRIM_YAW]
+#define r_setup_trim_steer	r_page_setup[PX4IO_P_SETUP_TRIM_STEER]
 #define r_setup_scale_roll 	r_page_setup[PX4IO_P_SETUP_SCALE_ROLL]
 #define r_setup_scale_pitch	r_page_setup[PX4IO_P_SETUP_SCALE_PITCH]
 #define r_setup_scale_yaw	r_page_setup[PX4IO_P_SETUP_SCALE_YAW]

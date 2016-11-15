@@ -203,6 +203,7 @@ private:
 		float trim_roll;
 		float trim_pitch;
 		float trim_yaw;
+		float trim_steer;
 		float rollsp_offset_deg;		/**< Roll Setpoint Offset in deg */
 		float pitchsp_offset_deg;		/**< Pitch Setpoint Offset in deg */
 		float rollsp_offset_rad;		/**< Roll Setpoint Offset in rad */
@@ -256,6 +257,7 @@ private:
 		param_t trim_roll;
 		param_t trim_pitch;
 		param_t trim_yaw;
+		param_t trim_steer;
 		param_t rollsp_offset_deg;
 		param_t pitchsp_offset_deg;
 		param_t man_roll_max;
@@ -439,6 +441,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_parameter_handles.trim_roll = param_find("TRIM_ROLL");
 	_parameter_handles.trim_pitch = param_find("TRIM_PITCH");
 	_parameter_handles.trim_yaw = param_find("TRIM_YAW");
+	_parameter_handles.trim_steer = param_find("TRIM_STEER");
 	_parameter_handles.rollsp_offset_deg = param_find("FW_RSP_OFF");
 	_parameter_handles.pitchsp_offset_deg = param_find("FW_PSP_OFF");
 
@@ -527,6 +530,7 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.trim_roll, &(_parameters.trim_roll));
 	param_get(_parameter_handles.trim_pitch, &(_parameters.trim_pitch));
 	param_get(_parameter_handles.trim_yaw, &(_parameters.trim_yaw));
+	param_get(_parameter_handles.trim_steer, &(_parameters.trim_steer));
 	param_get(_parameter_handles.rollsp_offset_deg, &(_parameters.rollsp_offset_deg));
 	param_get(_parameter_handles.pitchsp_offset_deg, &(_parameters.pitchsp_offset_deg));
 	_parameters.rollsp_offset_rad = math::radians(_parameters.rollsp_offset_deg);
@@ -1157,10 +1161,10 @@ FixedwingAttitudeControl::task_main()
 			}
 
 			_actuators.control[actuator_controls_s::INDEX_FLAPS] = _flaps_applied;
-			_actuators.control[5] = _manual.aux1;
+			_actuators.control[actuator_controls_s::INDEX_SPOILERS] = _manual.aux1;
 			_actuators.control[actuator_controls_s::INDEX_AIRBRAKES] = _flaperons_applied;
 			// FIXME: this should use _vcontrol_mode.landing_gear_pos in the future
-			_actuators.control[7] = _manual.aux3;
+			_actuators.control[actuator_controls_s::INDEX_LANDING_GEAR] = _actuators.control[actuator_controls_s::INDEX_YAW] - _parameters.trim_yaw + _parameters.trim_steer + _manual.aux3;
 
 			/* lazily publish the setpoint only once available */
 			_actuators.timestamp = hrt_absolute_time();

@@ -93,6 +93,22 @@ PARAM_DEFINE_FLOAT(TRIM_PITCH, 0.0f);
 PARAM_DEFINE_FLOAT(TRIM_YAW, 0.0f);
 
 /**
+ * Steer trim
+ *
+ * The trim value is the actuator control value the system needs
+ * for straight and level flight. It can be calibrated by
+ * flying manually straight and level using the RC trims and
+ * copying them using the GCS.
+ *
+ * @group Radio Calibration
+ * @min -0.25
+ * @max 0.25
+ * @decimal 2
+ * @increment 0.01
+ */
+PARAM_DEFINE_FLOAT(TRIM_STEER, 0.0f);
+
+/**
  * Datalink loss time threshold
  *
  * After this amount of seconds without datalink the data link lost mode triggers

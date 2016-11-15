@@ -73,6 +73,8 @@ int do_trim_calibration(orb_advert_t *mavlink_log_pub)
 	param_get(param_find("TRIM_PITCH"), &pitch_trim_active);
 	float yaw_trim_active;
 	param_get(param_find("TRIM_YAW"), &yaw_trim_active);
+	float steer_trim_active;
+	param_get(param_find("TRIM_STEER"), &steer_trim_active);
 
 	/* get manual control scale values */
 	float roll_scale;
@@ -95,12 +97,14 @@ int do_trim_calibration(orb_advert_t *mavlink_log_pub)
 	int p2r = param_set(param_find("TRIM_PITCH"), &p);
 	p = sp.r * yaw_scale + yaw_trim_active;
 	int p3r = param_set(param_find("TRIM_YAW"), &p);
+	p = sp.aux3 + steer_trim_active;
+	int p4r = param_set(param_find("TRIM_STEER"), &p);
 
 	/* store to permanent storage */
 	/* auto-save */
 	int save_ret = param_save_default();
 
-	if (save_ret != 0 || p1r != 0 || p2r != 0 || p3r != 0) {
+	if (save_ret != 0 || p1r != 0 || p2r != 0 || p3r != 0 || p4r != 0 ) {
 		mavlink_log_critical(mavlink_log_pub, "TRIM: PARAM SET FAIL");
 		px4_close(sub_man);
 		return PX4_ERROR;
