@@ -8,6 +8,8 @@ float32 xtrack_error
 float32 turn_distance		# the optimal distance to a waypoint to switch to the next
 
 float32 landing_horizontal_slope_displacement
-float32 landing_slope_angle_rad
+float32 landing_slope_angle_min_rad
+float32 landing_slope_angle_max_rad
+float32 landing_slope_angle_diff_rad_m
 float32 landing_flare_length
 bool abort_landing

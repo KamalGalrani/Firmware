@@ -47,7 +47,9 @@
 #include <mathlib/mathlib.h>
 
 Landingslope::Landingslope() :
-	_landing_slope_angle_rad(0.0f),
+	_landing_slope_angle_min_rad(0.0f),
+	_landing_slope_angle_max_rad(0.0f),
+	_landing_slope_angle_diff_rad_m(0.0f),
 	_flare_relative_alt(0.0f),
 	_motor_lim_relative_alt(0.0f),
 	_H1_virt(0.0f),
@@ -59,13 +61,17 @@ Landingslope::Landingslope() :
 {
 }
 
-void Landingslope::update(float landing_slope_angle_rad_new,
+void Landingslope::update(float landing_slope_angle_min_rad_new,
+			  float landing_slope_angle_max_rad_new,
+			  float landing_slope_angle_diff_rad_m_new,
 			  float flare_relative_alt_new,
 			  float motor_lim_relative_alt_new,
 			  float H1_virt_new)
 {
 
-	_landing_slope_angle_rad = landing_slope_angle_rad_new;
+	_landing_slope_angle_min_rad = landing_slope_angle_min_rad_new;
+	_landing_slope_angle_max_rad = landing_slope_angle_max_rad_new;
+	_landing_slope_angle_diff_rad_m = landing_slope_angle_diff_rad_m_new;
 	_flare_relative_alt = flare_relative_alt_new;
 	_motor_lim_relative_alt = motor_lim_relative_alt_new;
 	_H1_virt = H1_virt_new;
@@ -76,7 +82,7 @@ void Landingslope::update(float landing_slope_angle_rad_new,
 void Landingslope::calculateSlopeValues()
 {
 	_H0 =  _flare_relative_alt + _H1_virt;
-	_d1 = _flare_relative_alt / tanf(_landing_slope_angle_rad);
+	_d1 = _flare_relative_alt / tanf(_landing_slope_angle_min_rad);
 	_flare_constant = (_H0 * _d1) / _flare_relative_alt;
 	_flare_length = - logf(_H1_virt / _H0) * _flare_constant;
 	_horizontal_slope_displacement = (_flare_length - _d1);
@@ -85,7 +91,7 @@ void Landingslope::calculateSlopeValues()
 float Landingslope::getLandingSlopeRelativeAltitude(float wp_landing_distance)
 {
 	return Landingslope::getLandingSlopeRelativeAltitude(wp_landing_distance, _horizontal_slope_displacement,
-			_landing_slope_angle_rad);
+			_flare_length, _landing_slope_angle_min_rad, _landing_slope_angle_max_rad, _landing_slope_angle_diff_rad_m);
 }
 
 float Landingslope::getLandingSlopeRelativeAltitudeSave(float wp_landing_distance, float bearing_lastwp_currwp,
@@ -103,7 +109,7 @@ float Landingslope::getLandingSlopeRelativeAltitudeSave(float wp_landing_distanc
 float Landingslope::getLandingSlopeAbsoluteAltitude(float wp_landing_distance, float wp_altitude)
 {
 	return Landingslope::getLandingSlopeAbsoluteAltitude(wp_landing_distance, wp_altitude, _horizontal_slope_displacement,
-			_landing_slope_angle_rad);
+			_flare_length, _landing_slope_angle_min_rad, _landing_slope_angle_max_rad, _landing_slope_angle_diff_rad_m);
 }
 
 float Landingslope::getLandingSlopeAbsoluteAltitudeSave(float wp_landing_distance, float bearing_lastwp_currwp,

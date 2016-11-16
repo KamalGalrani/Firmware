@@ -304,8 +304,12 @@ bool MissionFeasibilityChecker::checkFixedWingLanding(dm_item_t dm_current, size
 				}
 
 				float wp_distance = get_distance_to_next_waypoint(missionitem_previous.lat , missionitem_previous.lon, missionitem.lat, missionitem.lon);
-				float slope_alt_req = Landingslope::getLandingSlopeAbsoluteAltitude(wp_distance, missionitem.altitude, _fw_pos_ctrl_status.landing_horizontal_slope_displacement, _fw_pos_ctrl_status.landing_slope_angle_rad);
-				float wp_distance_req = Landingslope::getLandingSlopeWPDistance(missionitem_previous.altitude, missionitem.altitude, _fw_pos_ctrl_status.landing_horizontal_slope_displacement, _fw_pos_ctrl_status.landing_slope_angle_rad);
+				float slope_alt_req = Landingslope::getLandingSlopeAbsoluteAltitude(wp_distance, missionitem.altitude, _fw_pos_ctrl_status.landing_horizontal_slope_displacement,
+							_fw_pos_ctrl_status.landing_flare_length, _fw_pos_ctrl_status.landing_slope_angle_min_rad, _fw_pos_ctrl_status.landing_slope_angle_max_rad,
+							_fw_pos_ctrl_status.landing_slope_angle_diff_rad_m);
+				float wp_distance_req = Landingslope::getLandingSlopeWPDistance(missionitem_previous.altitude, missionitem.altitude,
+							_fw_pos_ctrl_status.landing_horizontal_slope_displacement, _fw_pos_ctrl_status.landing_slope_angle_min_rad,
+							_fw_pos_ctrl_status.landing_slope_angle_max_rad, _fw_pos_ctrl_status.landing_slope_angle_diff_rad_m);
 				float delta_altitude = missionitem.altitude - missionitem_previous.altitude;
 //				warnx("wp_distance %.2f, delta_altitude %.2f, missionitem_previous.altitude %.2f, missionitem.altitude %.2f, slope_alt_req %.2f, wp_distance_req %.2f",
 //						wp_distance, delta_altitude, missionitem_previous.altitude, missionitem.altitude, slope_alt_req, wp_distance_req);

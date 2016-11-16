@@ -195,6 +195,20 @@ PARAM_DEFINE_FLOAT(FW_THR_MIN, 0.0f);
 PARAM_DEFINE_FLOAT(FW_THR_IDLE, 0.15f);
 
 /**
+ * Throttle limit value on landing slope
+ *
+ * This throttle value will be set as throttle limit when aircraft is on landing slope
+ *
+ * @unit norm
+ * @min 0.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.01
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(FW_THR_SLP_MAX, 0.4f);
+
+/**
  * Throttle limit value before flare
  *
  * This throttle value will be set as throttle limit at FW_LND_TLALT,
@@ -207,7 +221,7 @@ PARAM_DEFINE_FLOAT(FW_THR_IDLE, 0.15f);
  * @increment 0.01
  * @group FW L1 Control
  */
-PARAM_DEFINE_FLOAT(FW_THR_LND_MAX, 1.0f);
+PARAM_DEFINE_FLOAT(FW_THR_LND_MAX, 0.0f);
 
 /**
  * Climbout Altitude difference
@@ -227,7 +241,7 @@ PARAM_DEFINE_FLOAT(FW_THR_LND_MAX, 1.0f);
 PARAM_DEFINE_FLOAT(FW_CLMBOUT_DIFF, 10.0f);
 
 /**
- * Landing slope angle
+ * Minimum landing slope angle
  *
  * @unit deg
  * @min 1.0
@@ -236,7 +250,33 @@ PARAM_DEFINE_FLOAT(FW_CLMBOUT_DIFF, 10.0f);
  * @increment 0.5
  * @group FW L1 Control
  */
-PARAM_DEFINE_FLOAT(FW_LND_ANG, 5.0f);
+PARAM_DEFINE_FLOAT(FW_LND_ANG_MIN, 5.0f);
+
+/**
+ * Maximum landing slope angle
+ *
+ * @unit deg
+ * @min 1.0
+ * @max 45.0
+ * @decimal 1
+ * @increment 0.5
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(FW_LND_ANG_MAX, 20.0f);
+
+/**
+ * Landing slope angle differential
+ *
+ * Landing slope angle is given by MIN((FW_LND_ANG_MIN + FW_LND_ANG_DIFF * (wp_landing_distance - flare_length)), FW_LND_ANG_MAX)
+ *
+ * @unit deg
+ * @min 0.0
+ * @max 0.2
+ * @decimal 2
+ * @increment 0.01
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(FW_LND_ANG_DIFF, 0.05f);
 
 /**
  *

@@ -298,9 +298,12 @@ private:
 		float rollsp_offset_rad;
 		float pitchsp_offset_rad;
 
+		float throttle_land_slp_max;
 		float throttle_land_max;
 
-		float land_slope_angle;
+                float land_slope_angle_min;
+                float land_slope_angle_max;
+                float land_slope_angle_diff;
 		float land_H1_virt;
 		float land_flare_alt_relative;
 		float land_thrust_lim_alt_relative;
@@ -356,9 +359,12 @@ private:
 		param_t rollsp_offset_deg;
 		param_t pitchsp_offset_deg;
 
+		param_t throttle_land_slp_max;
 		param_t throttle_land_max;
 
-		param_t land_slope_angle;
+                param_t land_slope_angle_min;
+                param_t land_slope_angle_max;
+                param_t land_slope_angle_diff;
 		param_t land_H1_virt;
 		param_t land_flare_alt_relative;
 		param_t land_thrust_lim_alt_relative;
@@ -638,13 +644,16 @@ FixedwingPositionControl::FixedwingPositionControl() :
 	_parameter_handles.throttle_idle = param_find("FW_THR_IDLE");
 	_parameter_handles.throttle_slew_max = param_find("FW_THR_SLEW_MAX");
 	_parameter_handles.throttle_cruise = param_find("FW_THR_CRUISE");
+	_parameter_handles.throttle_land_slp_max = param_find("FW_THR_SLP_MAX");
 	_parameter_handles.throttle_land_max = param_find("FW_THR_LND_MAX");
 	_parameter_handles.man_roll_max_deg = param_find("FW_MAN_R_MAX");
 	_parameter_handles.man_pitch_max_deg = param_find("FW_MAN_P_MAX");
 	_parameter_handles.rollsp_offset_deg = param_find("FW_RSP_OFF");
 	_parameter_handles.pitchsp_offset_deg = param_find("FW_PSP_OFF");
 
-	_parameter_handles.land_slope_angle = param_find("FW_LND_ANG");
+        _parameter_handles.land_slope_angle_min  = param_find("FW_LND_ANG_MIN");
+        _parameter_handles.land_slope_angle_max  = param_find("FW_LND_ANG_MAX");
+        _parameter_handles.land_slope_angle_diff = param_find("FW_LND_ANG_DIFF");
 	_parameter_handles.land_H1_virt = param_find("FW_LND_HVIRT");
 	_parameter_handles.land_flare_alt_relative = param_find("FW_LND_FLALT");
 	_parameter_handles.land_flare_pitch_min_deg = param_find("FW_LND_FL_PMIN");
@@ -725,6 +734,7 @@ FixedwingPositionControl::parameters_update()
 	param_get(_parameter_handles.throttle_cruise, &(_parameters.throttle_cruise));
 	param_get(_parameter_handles.throttle_slew_max, &(_parameters.throttle_slew_max));
 
+	param_get(_parameter_handles.throttle_land_slp_max, &(_parameters.throttle_land_slp_max));
 	param_get(_parameter_handles.throttle_land_max, &(_parameters.throttle_land_max));
 
 	param_get(_parameter_handles.man_roll_max_deg, &_parameters.man_roll_max_rad);
@@ -756,7 +766,9 @@ FixedwingPositionControl::parameters_update()
 	param_get(_parameter_handles.heightrate_ff, &(_parameters.heightrate_ff));
 	param_get(_parameter_handles.speedrate_p, &(_parameters.speedrate_p));
 
-	param_get(_parameter_handles.land_slope_angle, &(_parameters.land_slope_angle));
+        param_get(_parameter_handles.land_slope_angle_min, &(_parameters.land_slope_angle_min));
+        param_get(_parameter_handles.land_slope_angle_max, &(_parameters.land_slope_angle_max));
+        param_get(_parameter_handles.land_slope_angle_diff, &(_parameters.land_slope_angle_diff));
 	param_get(_parameter_handles.land_H1_virt, &(_parameters.land_H1_virt));
 	param_get(_parameter_handles.land_flare_alt_relative, &(_parameters.land_flare_alt_relative));
 	param_get(_parameter_handles.land_thrust_lim_alt_relative, &(_parameters.land_thrust_lim_alt_relative));
@@ -809,11 +821,14 @@ FixedwingPositionControl::parameters_update()
 	}
 
 	/* Update the landing slope */
-	_landingslope.update(math::radians(_parameters.land_slope_angle), _parameters.land_flare_alt_relative,
+	_landingslope.update(math::radians(_parameters.land_slope_angle_min), math::radians(_parameters.land_slope_angle_max),
+                             math::radians(_parameters.land_slope_angle_diff), _parameters.land_flare_alt_relative,
 			     _parameters.land_thrust_lim_alt_relative, _parameters.land_H1_virt);
 
 	/* Update and publish the navigation capabilities */
-	_fw_pos_ctrl_status.landing_slope_angle_rad = _landingslope.landing_slope_angle_rad();
+	_fw_pos_ctrl_status.landing_slope_angle_min_rad = _landingslope.landing_slope_angle_min_rad();
+	_fw_pos_ctrl_status.landing_slope_angle_max_rad = _landingslope.landing_slope_angle_max_rad();
+	_fw_pos_ctrl_status.landing_slope_angle_diff_rad_m = _landingslope.landing_slope_angle_diff_rad_m();
 	_fw_pos_ctrl_status.landing_horizontal_slope_displacement = _landingslope.horizontal_slope_displacement();
 	_fw_pos_ctrl_status.landing_flare_length = _landingslope.flare_length();
 	fw_pos_ctrl_status_publish();
@@ -1274,6 +1289,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 
 	_att_sp.fw_control_yaw = false;		// by default we don't want yaw to be contoller directly with rudder
 	_att_sp.apply_flaps = false;		// by default we don't use flaps
+	_att_sp.apply_brakes = false;		// by default we don't use brakes
 	float eas2tas = 1.0f; // XXX calculate actual number based on current measurements
 
 	/* filter speed and altitude for controller */
@@ -1406,6 +1422,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 			_att_sp.thrust = 0.0f;
 			_att_sp.roll_body = 0.0f;
 			_att_sp.pitch_body = 0.0f;
+			_att_sp.apply_flaps = false;
+			_att_sp.apply_brakes = false;
 
 		} else if (pos_sp_triplet.current.type == position_setpoint_s::SETPOINT_TYPE_POSITION) {
 			/* waypoint is a plain navigation waypoint */
@@ -1462,6 +1480,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 			// apply full flaps for landings. this flag will also trigger the use of flaperons
 			// if they have been enabled using the corresponding parameter
 			_att_sp.apply_flaps = true;
+			_att_sp.apply_brakes = false;
 
 			// save time at which we started landing and reset abort_landing
 			if (_time_started_landing == 0) {
@@ -1632,39 +1651,41 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 				if ((_flare_curve_alt_rel_last < flare_curve_alt_rel && _land_noreturn_vertical) || _land_stayonground) {
 					flare_curve_alt_rel = 0.0f; // stay on ground
 					_land_stayonground = true;
+					_att_sp.apply_flaps = false;
+					_att_sp.apply_brakes = true;
 				}
-
-				tecs_update_pitch_throttle(terrain_alt + flare_curve_alt_rel,
-							   calculate_target_airspeed(airspeed_land),
-							   eas2tas,
-							   math::radians(_parameters.land_flare_pitch_min_deg),
-							   math::radians(_parameters.land_flare_pitch_max_deg),
-							   0.0f,
-							   throttle_max,
-							   throttle_land,
-							   false,
-							   _land_motor_lim ? math::radians(_parameters.land_flare_pitch_min_deg)
-							   : math::radians(_parameters.pitch_limit_min),
-							   _global_pos.alt,
-							   ground_speed,
-							   _land_motor_lim ? tecs_status_s::TECS_MODE_LAND_THROTTLELIM : tecs_status_s::TECS_MODE_LAND);
 
 				if (!_land_noreturn_vertical) {
 					// just started with the flaring phase
-					_att_sp.pitch_body = 0.0f;
+					_att_sp.pitch_body = - math::radians(_parameters.land_slope_angle_min);
 					_flare_height = _global_pos.alt - terrain_alt;
 					mavlink_log_info(&_mavlink_log_pub, "#Landing, flaring");
 					_land_noreturn_vertical = true;
 
 				} else {
 					if (_global_pos.vel_d > 0.1f) {
-						_att_sp.pitch_body = math::radians(_parameters.land_flare_pitch_min_deg) *
+						_att_sp.pitch_body = - math::radians(_parameters.land_slope_angle_min) +
+                                                                     math::radians(_parameters.land_flare_pitch_min_deg + _parameters.land_slope_angle_min) *
 								     math::constrain((_flare_height - (_global_pos.alt - terrain_alt)) / _flare_height, 0.0f, 1.0f);
 
 					} else {
 						_att_sp.pitch_body = _att_sp.pitch_body;
 					}
 				}
+
+				tecs_update_pitch_throttle(terrain_alt + flare_curve_alt_rel,
+							   calculate_target_airspeed(airspeed_land),
+							   eas2tas,
+							   _att_sp.pitch_body,
+							   math::radians(_parameters.land_flare_pitch_max_deg),
+							   0.0f,
+							   throttle_max,
+							   throttle_land,
+							   false,
+							   _land_motor_lim ? _att_sp.pitch_body : math::radians(_parameters.pitch_limit_min),
+							   _global_pos.alt,
+							   ground_speed,
+							   _land_motor_lim ? tecs_status_s::TECS_MODE_LAND_THROTTLELIM : tecs_status_s::TECS_MODE_LAND);
 
 				_flare_curve_alt_rel_last = flare_curve_alt_rel;
 
@@ -1701,8 +1722,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 							   math::radians(_parameters.pitch_limit_min),
 							   math::radians(_parameters.pitch_limit_max),
 							   _parameters.throttle_min,
-							   _parameters.throttle_max,
-							   _parameters.throttle_cruise,
+							   _land_onslope ? _parameters.throttle_land_slp_max : _parameters.throttle_max,
+							   _land_onslope ? _parameters.throttle_land_slp_max : _parameters.throttle_cruise,
 							   false,
 							   math::radians(_parameters.pitch_limit_min),
 							   _global_pos.alt,
@@ -2110,7 +2131,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 		if (_vehicle_land_detected.landed) {
 			// when we are landed state we want the motor to spin at idle speed
 			_att_sp.thrust = math::min(_parameters.throttle_idle, throttle_max);
-
+			_att_sp.apply_flaps = false;
+			_att_sp.apply_brakes = false;
 		} else {
 			_att_sp.thrust = math::min(get_tecs_thrust(), throttle_max);
 		}
